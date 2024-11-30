@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced Telegram Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: var(--tg-theme-bg-color, #ffffff);
+      color: var(--tg-theme-text-color, #000000);
+      transition: all 0.3s ease;
+    }
+    .search-container {
+      text-align: center;
+      background: var(--tg-theme-secondary-bg-color, #f8f9fa);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 20px;
+      padding: 20px;
+      max-width: 500px;
+      width: 90%;
+    }
+    .search-container h1 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .welcome {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: var(--tg-theme-hint-color, #6c757d);
+    }
+    .search-container input[type="text"] {
+      width: 70%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 25px;
+      margin-bottom: 10px;
+      outline: none;
+      font-size: 16px;
+    }
+    .search-container button {
+      padding: 10px 20px;
+      border: none;
+      background-color: var(--tg-theme-button-color, #007bff);
+      color: var(--tg-theme-button-text-color, white);
+      border-radius: 25px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    .search-container button:hover {
+      opacity: 0.9;
+    }
+    .shortcuts {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .shortcut {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      background: var(--tg-theme-hint-color, #f1f1f1);
+      border-radius: 15px;
+      padding: 10px 20px;
+      color: var(--tg-theme-text-color, #333);
+      font-size: 14px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    .shortcut:hover {
+      background-color: var(--tg-theme-link-color, #007bff);
+      color: white;
+    }
+    .theme-toggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      background-color: var(--tg-theme-secondary-bg-color, #f8f9fa);
+      border: none;
+      border-radius: 15px;
+      padding: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()">🌙 Toggle Theme</button>
+  <div class="search-container">
+    <h1>Enhanced Web Search</h1>
+    <div class="welcome" id="welcomeMessage">Welcome!</div>
+    <input type="text" id="searchBox" placeholder="Search Google">
+    <button onclick="performSearch()">Search</button>
+    <button onclick="startVoiceSearch()">🎤 Voice Search</button>
+    <div class="shortcuts">
+      <a class="shortcut" href="https://chatgpt.com" target="_blank">
+        ChatGPT
+      </a>
+      <a class="shortcut" href="https://www.bing.com/images/create" target="_blank">
+        Bing Image Gen
+      </a>
+      <a class="shortcut" id="customShortcut1" href="#" onclick="setCustomShortcut(1)">
+        Add Shortcut 1
+      </a>
+      <a class="shortcut" id="customShortcut2" href="#" onclick="setCustomShortcut(2)">
+        Add Shortcut 2
+      </a>
+      <a class="shortcut" id="customShortcut3" href="#" onclick="setCustomShortcut(3)">
+        Add Shortcut 3
+      </a>
+    </div>
+    <button onclick="clearShortcuts()">Clear Shortcuts</button>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.ready();
+
+    // Theme toggle
+    let isDarkTheme = false;
+    function toggleTheme() {
+      isDarkTheme = !isDarkTheme;
+      document.body.style.backgroundColor = isDarkTheme ? "#1e1e1e" : "#ffffff";
+      document.body.style.color = isDarkTheme ? "#ffffff" : "#000000";
+    }
+
+    // Voice search
+    function startVoiceSearch() {
+      if (!('webkitSpeechRecognition' in window)) {
+        alert('Voice search is not supported in your browser.');
+        return;
+      }
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.onresult = (event) => {
+        const query = event.results[0][0].transcript;
+        document.getElementById('searchBox').value = query;
+        performSearch();
+      };
+      recognition.start();
+    }
+
+    // Perform search
+    function performSearch() {
+      const query = document.getElementById("searchBox").value;
+      if (query) {
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, "_blank");
+      }
+    }
+
+    // Custom shortcuts
+    function setCustomShortcut(num) {
+      const title = prompt("Enter a title for shortcut " + num + ":");
+      const url = prompt("Enter the URL for shortcut " + num + ":");
+      if (title && url) {
+        localStorage.setItem(`customShortcut${num}`, JSON.stringify({ title, url }));
+        updateShortcut(num, title, url);
+      }
+    }
+
+    function updateShortcut(num, title, url) {
+      const shortcut = document.getElementById(`customShortcut${num}`);
+      shortcut.textContent = title;
+      shortcut.setAttribute("href", url);
+    }
+
+    // Load shortcuts
+    function loadShortcuts() {
+      for (let i = 1; i <= 3; i++) {
+        const shortcutData = localStorage.getItem(`customShortcut${i}`);
+        if (shortcutData) {
+          const { title, url } = JSON.parse(shortcutData);
+          updateShortcut(i, title, url);
+        }
+      }
+    }
+
+    // Clear shortcuts
+    function clearShortcuts() {
+      for (let i = 1; i <= 3; i++) {
+        localStorage.removeItem(`customShortcut${i}`);
+        updateShortcut(i, `Add Shortcut ${i}`, "#");
+      }
+    }
+
+    // Show welcome message
+    function showWelcomeMessage() {
+      const user = tg.initDataUnsafe?.user?.first_name || "Guest";
+      document.getElementById("welcomeMessage").textContent = `Welcome, ${user}!`;
+    }
+
+    // Initialize on load
+    window.onload = () => {
+      loadShortcuts();
+      showWelcomeMessage();
+    };
+  </script>
+</body>
+</html>
